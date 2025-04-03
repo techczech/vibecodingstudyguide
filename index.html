@@ -5,17 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interactive Vibe Coding Study Guide</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-      @font-face {
-        font-family: 'LucideIcons';
-        /* Corrected URL format */
-        src: url('https://cdn.jsdelivr.net/npm/lucide-static@latest/font/Lucide.ttf') format('truetype');
-      }
-      .lucide {
-        font-family: 'LucideIcons';
-        font-size: 1.25rem; /* Adjust size as needed */
-        line-height: 1;
-      }
       /* Basic transition for smooth content switching */
       .content-section {
         transition: opacity 0.3s ease-in-out;
@@ -50,11 +41,13 @@
         height: 100%;
         backface-visibility: hidden;
         display: flex;
+        flex-direction: column; /* Stack icon and text */
         align-items: center;
         justify-content: center;
         padding: 1.5rem;
         border-radius: 0.5rem;
         box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        text-align: center; /* Center text */
       }
       .flashcard-front {
         background-color: #f3f4f6; /* gray-100 */
@@ -85,6 +78,108 @@
         background-color: #fee2e2; /* red-100 */
         border-color: #ef4444; /* red-500 */
       }
+       /* Self-Assessment Styling */
+      .assessment-item {
+        display: flex;
+        flex-wrap: wrap; /* Allow wrapping on small screens */
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0; /* Increased padding */
+        border-bottom: 1px solid #e5e7eb; /* gray-200 */
+      }
+       .assessment-label {
+         flex-grow: 1;
+         margin-right: 1rem;
+         margin-bottom: 0.5rem; /* Add space below label on wrap */
+         font-medium: inherit; /* Inherit font weight */
+       }
+      .assessment-options {
+          white-space: nowrap; /* Prevent wrapping of radio buttons */
+          margin-bottom: 0.5rem; /* Add space below options on wrap */
+          display: flex; /* Use flex for spacing */
+          gap: 0.5rem; /* Add gap between buttons */
+      }
+      /* Style for the clickable radio label */
+      .rating-label {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.5rem; /* w-10 */
+        height: 2.5rem; /* h-10 */
+        border: 1px solid #d1d5db; /* border-gray-300 */
+        border-radius: 9999px; /* rounded-full */
+        cursor: pointer;
+        transition: all 0.2s ease-in-out;
+        font-size: 0.875rem; /* text-sm */
+        font-weight: 500; /* font-medium */
+        color: #4b5563; /* text-gray-600 */
+      }
+      .rating-label:hover {
+        background-color: #f3f4f6; /* hover:bg-gray-100 */
+        border-color: #9ca3af; /* hover:border-gray-400 */
+      }
+      /* Style for when the hidden radio button inside is checked */
+      .rating-label input:checked + span {
+         /* Use ring for focus state potentially */
+      }
+      .rating-label input:checked {
+         /* We hide the input, style the parent label */
+      }
+      /* Direct parent styling when checked - simpler than has() for broader support? */
+      /* We will use JS to add a class for checked state for better compatibility */
+      .rating-label.checked {
+        background-color: #bfdbfe; /* bg-blue-200 */
+        border-color: #60a5fa; /* border-blue-400 */
+        color: #1d4ed8; /* text-blue-700 */
+        font-weight: 600; /* font-semibold */
+      }
+
+
+      #assessment-chart-container {
+          max-width: 500px; /* Limit chart size */
+          margin: 2rem auto 0 auto; /* Center chart */
+      }
+
+      /* Utility for inline icons */
+      .inline-icon {
+        display: inline-block;
+        width: 1.1em; /* Adjust size as needed */
+        height: 1.1em;
+        vertical-align: -0.15em; /* Adjust vertical alignment */
+        margin-right: 0.2em;
+      }
+       .heading-icon {
+         display: inline-block;
+         width: 1.2em;
+         height: 1.2em;
+         vertical-align: -0.15em;
+         margin-right: 0.3em;
+       }
+       .button-icon {
+         display: inline-block;
+         width: 1.2em;
+         height: 1.2em;
+         vertical-align: -0.15em;
+       }
+       .nav-icon {
+         display: inline-block;
+         width: 1.1em;
+         height: 1.1em;
+         vertical-align: -0.15em;
+         margin-right: 0.4em;
+       }
+        .check-icon {
+         display: inline-block;
+         width: 1em;
+         height: 1em;
+         vertical-align: -0.1em;
+       }
+       /* Flashcard icon styling */
+       .flashcard-icon {
+         width: 2rem; /* w-8 */
+         height: 2rem; /* h-8 */
+         margin-bottom: 0.5rem; /* mb-2 */
+       }
     </style>
 </head>
 <body class="bg-gray-50 font-sans antialiased text-gray-800">
@@ -109,10 +204,10 @@
 
              <div class="mt-8 flex justify-between border-t pt-4">
                 <button id="prev-btn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg inline-flex items-center transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed">
-                    <span class="lucide mr-2">&#xea1b;</span> Previous
+                    <img src="https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/arrow-left.svg" alt="Previous" class="button-icon mr-2"> Previous
                 </button>
                 <button id="next-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg inline-flex items-center transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed">
-                     Next <span class="lucide ml-2">&#xea1f;</span>
+                     Next <img src="https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/arrow-right.svg" alt="Next" class="button-icon ml-2">
                 </button>
             </div>
         </main>
@@ -136,23 +231,85 @@
 
 
     <script>
-        // --- Data Structure ---
+        // --- Helper Function for Icon URLs ---
+        function getIconUrlForSection(id) {
+            let iconName = '';
+            switch (id) {
+                case 'intro': iconName = 'hand'; break;
+                case 'tools': iconName = 'terminal-square'; break;
+                case 'windsurf-features': iconName = 'sparkles'; break;
+                case 'language-stack': iconName = 'code-2'; break;
+                case 'planning': iconName = 'file-text'; break;
+                case 'version-control': iconName = 'git-branch'; break;
+                case 'rules': iconName = 'list-checks'; break;
+                case 'workflow': iconName = 'refresh-cw'; break;
+                case 'tips': iconName = 'lightbulb'; break;
+                case 'final-quiz': iconName = 'award'; break;
+                case 'self-assessment': iconName = 'clipboard-check'; break;
+                case 'conclusion': iconName = 'flag'; break;
+                default: return ''; // No icon
+            }
+            return `https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/${iconName}.svg`;
+        }
+
+        // Helper function for Flashcard Icon URLs
+        function getIconUrlForFlashcard(term) {
+            let iconName = '';
+            switch (term) {
+                // Section 2
+                case 'Model Switching': iconName = 'replace'; break;
+                case 'Tab Completion': iconName = 'keyboard'; break;
+                case 'Browser Preview': iconName = 'monitor-play'; break;
+                case 'Contextual Knowledge': iconName = 'link'; break;
+                // Section 5
+                case 'Version Control': iconName = 'history'; break;
+                case 'Git': iconName = 'git-branch'; break;
+                case 'Commit': iconName = 'git-commit'; break;
+                case 'Rollback': iconName = 'rotate-ccw'; break;
+                case 'GitHub': iconName = 'github'; break;
+                case '.gitignore': iconName = 'file-minus-2'; break;
+                // Section 8
+                case 'Chat vs. Write Mode': iconName = 'message-circle'; break;
+                case 'Frontend Templates': iconName = 'layout-template'; break;
+                case 'Targeting Code (@)': iconName = 'at-sign'; break;
+                case 'three.js': iconName = 'box'; break;
+                case 'API Keys Security': iconName = 'key'; break;
+                case 'Refactoring': iconName = 'recycle'; break;
+                case 'MCP Servers': iconName = 'server'; break;
+                default: return ''; // Or a default placeholder icon
+            }
+             return iconName ? `https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/${iconName}.svg` : '';
+        }
+
+
+        // --- Data Structure (Added final quiz and self-assessment) ---
         const studyGuideData = [
+             // Section 0: Intro
             {
                 id: 'intro',
                 title: 'Introduction',
                 content: `
-                    <h2 class="text-2xl font-semibold mb-4">Welcome!</h2>
-                    <p class="mb-4">This is an interactive study guide for the Vibe Coding tutorial by Matthew Berman.</p>
+                    <h2 class="text-2xl font-semibold mb-4"><img src="${getIconUrlForSection('intro')}" alt="Intro" class="heading-icon">Welcome!</h2>
+                    <p class="mb-4">
+                        This is an interactive study guide based on the Vibe Coding tutorial by Matthew Berman. You can watch the original video here:
+                        <a href="https://youtu.be/v7UcVPO4y3c?si=y5D84kHyDQTyz3VY" target="_blank" class="text-blue-600 hover:underline">
+                            Vibe Coding Complete Tutorial and Tips <img src="https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/link.svg" alt="Link" class="inline-icon">
+                        </a>
+                    </p>
                     <p>Navigate through the sections using the sidebar. Each section covers key concepts from the video and includes interactive elements like quizzes or flashcards to test your understanding.</p>
                     <p class="mt-4">Click "Next" to begin.</p>
+                    <hr class="my-6">
+                    <p class="text-xs text-gray-500 italic">
+                        This study guide was created by Gemini 2.5 using Canvas within the Gemini app, with instructions being given by <a href="https://linkedin.com/in/dominiklukes" target="_blank" class="text-blue-600 hover:underline">Dominik Lukeš</a>.
+                    </p>
                 `
             },
+            // Section 1: Tools
             {
                 id: 'tools',
                 title: '1. Choosing Your Tool',
                 content: `
-                    <h2 class="text-2xl font-semibold mb-4">Choosing Your Vibe Coding Tool</h2>
+                    <h2 class="text-2xl font-semibold mb-4"><img src="${getIconUrlForSection('tools')}" alt="Tools" class="heading-icon">Choosing Your Vibe Coding Tool</h2>
                     <p class="mb-4">The first step is selecting the right tool. Key options include:</p>
                     <ul class="list-disc pl-5 mb-6 space-y-2">
                         <li><strong>Windsurf & Cursor:</strong> Code editors (Windsurf is a VS Code fork). Agentic, good for complex projects.</li>
@@ -163,29 +320,19 @@
                     <p class="mb-4"><strong>Key Takeaway:</strong> Use AI Canvases for simple tasks, dedicated tools (Windsurf/Cursor) for complex projects.</p>
                 `,
                 quiz: [
-                    {
-                        question: "Which tool is described as a fork of VS Code and good for complex, agentic coding?",
-                        options: ["Replit", "Cline", "Windsurf/Cursor", "AI Canvas"],
-                        answer: "Windsurf/Cursor"
-                    },
-                    {
-                        question: "What is the main advantage of using Replit?",
-                        options: ["Most agentic", "Runs offline", "Easy deployment", "Best for Python only"],
-                        answer: "Easy deployment"
-                    },
-                     {
-                        question: "Which option is best for quickly running simple HTML/JS code directly in the browser without installation?",
-                        options: ["Windsurf", "Cline", "AI Canvas Features", "Cursor"],
-                        answer: "AI Canvas Features"
-                    }
+                    { question: "Which tool is described as a fork of VS Code and good for complex, agentic coding?", options: ["Replit", "Cline", "Windsurf/Cursor", "AI Canvas"], answer: "Windsurf/Cursor" },
+                    { question: "What is the main advantage of using Replit?", options: ["Most agentic", "Runs offline", "Easy deployment", "Best for Python only"], answer: "Easy deployment" },
+                    { question: "Which option is best for quickly running simple HTML/JS code directly in the browser without installation?", options: ["Windsurf", "Cline", "AI Canvas Features", "Cursor"], answer: "AI Canvas Features" }
                 ]
             },
+            // Section 2: Windsurf Features
              {
                 id: 'windsurf-features',
                 title: '2. Windsurf Features',
                 content: `
-                    <h2 class="text-2xl font-semibold mb-4">Windsurf Features</h2>
-                    <p class="mb-4">Windsurf offers several helpful features for vibe coding (as shown in the sponsor segment):</p>
+                    <h2 class="text-2xl font-semibold mb-4"><img src="${getIconUrlForSection('windsurf-features')}" alt="Features" class="heading-icon">Windsurf Features</h2>
+                     <p class="mb-4">Windsurf offers several helpful features for vibe coding (as shown in the sponsor segment):</p>
+                    <hr class="my-6">
                     <p class="mb-6">Use the flashcards below to review key features.</p>
                 `,
                 flashcards: [
@@ -195,12 +342,13 @@
                     { term: "Contextual Knowledge", definition: "Ability to paste URLs (like documentation) into Cascade to give the AI extra context." }
                 ]
             },
+            // Section 3: Language & Stack
             {
                 id: 'language-stack',
                 title: '3. Language & Stack',
                 content: `
-                    <h2 class="text-2xl font-semibold mb-4">Choosing Your Language & Stack</h2>
-                    <p class="mb-4">Selecting the right language is important:</p>
+                    <h2 class="text-2xl font-semibold mb-4"><img src="${getIconUrlForSection('language-stack')}" alt="Language" class="heading-icon">Choosing Your Language & Stack</h2>
+                     <p class="mb-4">Selecting the right language is important:</p>
                     <ul class="list-disc pl-5 mb-6 space-y-2">
                         <li><strong>Rule:</strong> Choose popular languages (more training data for AI).</li>
                         <li><strong>Top Choices:</strong> JavaScript (most popular), Python (popular in AI).</li>
@@ -210,24 +358,17 @@
                      <p class="mb-4"><strong>Key Takeaway:</strong> Stick to popular languages like JS or Python.</p>
                 `,
                  quiz: [
-                    {
-                        question: "What is the main reason given for choosing a popular programming language?",
-                        options: ["Easier to learn", "Faster execution speed", "More AI training data available", "Better documentation"],
-                        answer: "More AI training data available"
-                    },
-                    {
-                        question: "Which two languages were highlighted as top choices for vibe coding?",
-                        options: ["Java & C#", "Python & JavaScript", "Ruby & Go", "Swift & Kotlin"],
-                        answer: "Python & JavaScript"
-                    }
+                    { question: "What is the main reason given for choosing a popular programming language?", options: ["Easier to learn", "Faster execution speed", "More AI training data available", "Better documentation"], answer: "More AI training data available" },
+                    { question: "Which two languages were highlighted as top choices for vibe coding?", options: ["Java & C#", "Python & JavaScript", "Ruby & Go", "Swift & Kotlin"], answer: "Python & JavaScript" }
                 ]
             },
+            // Section 4: Planning
              {
                 id: 'planning',
                 title: '4. Planning Your Project',
                 content: `
-                    <h2 class="text-2xl font-semibold mb-4">Planning Your Project</h2>
-                    <p class="mb-4">Thorough planning is crucial *before* coding:</p>
+                    <h2 class="text-2xl font-semibold mb-4"><img src="${getIconUrlForSection('planning')}" alt="Planning" class="heading-icon">Planning Your Project</h2>
+                     <p class="mb-4">Thorough planning is crucial *before* coding:</p>
                     <ul class="list-disc pl-5 mb-6 space-y-2">
                         <li><strong>Invest Time:</strong> Think through features, edge cases, and desired behavior upfront.</li>
                         <li><strong>Use AI Assistance:</strong> Tools like Grok can help brainstorm and identify gaps. Ask AI clarifying questions.</li>
@@ -238,24 +379,17 @@
                     <p class="mb-4"><strong>Key Takeaway:</strong> Don't skip planning. Use AI to help create detailed PRD and To-Do lists.</p>
                 `,
                 quiz: [
-                    {
-                        question: "What document format is recommended for the project plan (PRD) and To-Do list?",
-                        options: ["Plain Text (.txt)", "Word Document (.docx)", "Markdown (.md)", "JSON (.json)"],
-                        answer: "Markdown (.md)"
-                    },
-                    {
-                        question: "True or False: The project plan (PRD) and To-Do list should be created once and never changed.",
-                        options: ["True", "False"],
-                        answer: "False"
-                    }
+                    { question: "What document format is recommended for the project plan (PRD) and To-Do list?", options: ["Plain Text (.txt)", "Word Document (.docx)", "Markdown (.md)", "JSON (.json)"], answer: "Markdown (.md)" },
+                    { question: "True or False: The project plan (PRD) and To-Do list should be created once and never changed.", options: ["True", "False"], answer: "False" }
                 ]
             },
+            // Section 5: Version Control
             {
                 id: 'version-control',
                 title: '5. Version Control (Git)',
                 content: `
-                    <h2 class="text-2xl font-semibold mb-4">Version Control: Your Safety Net</h2>
-                    <p class="mb-4">Version control is essential, especially for vibe coding:</p>
+                    <h2 class="text-2xl font-semibold mb-4"><img src="${getIconUrlForSection('version-control')}" alt="Version Control" class="heading-icon">Version Control: Your Safety Net</h2>
+                     <p class="mb-4">Version control is essential, especially for vibe coding:</p>
                     <ul class="list-disc pl-5 mb-6 space-y-2">
                         <li><strong>Purpose:</strong> Saves snapshots (versions) of your code.</li>
                         <li><strong>Critical Benefit:</strong> Allows you to **roll back** to a working state if AI breaks the code.</li>
@@ -263,6 +397,7 @@
                         <li><strong>AI Assistance:</strong> Your AI agent can handle most Git commands (init, commit, etc.).</li>
                         <li><strong>GitHub:</strong> Use for cloud backup ("Google Docs for code").</li>
                     </ul>
+                    <hr class="my-6">
                     <p class="mb-4"><strong>Key Takeaway:</strong> Use Git, let AI help with commands, use GitHub for backup, commit frequently!</p>
                 `,
                  flashcards: [
@@ -274,12 +409,13 @@
                     { term: ".gitignore", definition: "A file specifying files/directories that Git should ignore (not track)." }
                 ]
             },
+            // Section 6: Rules
             {
                 id: 'rules',
                 title: '6. Guiding the AI with Rules',
                 content: `
-                    <h2 class="text-2xl font-semibold mb-4">Guiding the AI with Rules</h2>
-                    <p class="mb-4">Rules act like system prompts to guide the AI's coding style and workflow:</p>
+                    <h2 class="text-2xl font-semibold mb-4"><img src="${getIconUrlForSection('rules')}" alt="Rules" class="heading-icon">Guiding the AI with Rules</h2>
+                     <p class="mb-4">Rules act like system prompts to guide the AI's coding style and workflow:</p>
                     <ul class="list-disc pl-5 mb-6 space-y-2">
                         <li><strong>Purpose:</strong> Ensure consistency and adherence to desired practices.</li>
                         <li><strong>Access (Windsurf):</strong> Settings -> Memories and Rules -> Manage.</li>
@@ -295,29 +431,18 @@
                      <p class="mb-4"><strong>Key Takeaway:</strong> Use rules to customize AI behavior. Start with examples and explore language-specific rule sets.</p>
                  `,
                  quiz: [
-                    {
-                        question: "What is the primary purpose of using 'Rules' in tools like Windsurf?",
-                        options: ["To speed up the AI", "To guide the AI's coding style and workflow", "To automatically fix bugs", "To choose the AI model"],
-                        answer: "To guide the AI's coding style and workflow"
-                    },
-                    {
-                        question: "Which type of rule applies to *all* projects within Windsurf?",
-                        options: ["Workspace Rule", "Temporary Rule", "Global Rule", "Language Rule"],
-                        answer: "Global Rule"
-                    },
-                    {
-                        question: "Where can you find pre-made, language-specific rule sets mentioned in the video?",
-                        options: ["Windsurf documentation", "Stack Overflow", "The `awesome-cursorrules` GitHub repository", "Replit templates"],
-                        answer: "The `awesome-cursorrules` GitHub repository"
-                    }
+                    { question: "What is the primary purpose of using 'Rules' in tools like Windsurf?", options: ["To speed up the AI", "To guide the AI's coding style and workflow", "To automatically fix bugs", "To choose the AI model"], answer: "To guide the AI's coding style and workflow" },
+                    { question: "Which type of rule applies to *all* projects within Windsurf?", options: ["Workspace Rule", "Temporary Rule", "Global Rule", "Language Rule"], answer: "Global Rule" },
+                    { question: "Where can you find pre-made, language-specific rule sets mentioned in the video?", options: ["Windsurf documentation", "Stack Overflow", "The `awesome-cursorrules` GitHub repository", "Replit templates"], answer: "The `awesome-cursorrules` GitHub repository" }
                 ]
             },
+            // Section 7: Workflow
             {
                 id: 'workflow',
                 title: '7. The Vibe Coding Workflow',
                 content: `
-                    <h2 class="text-2xl font-semibold mb-4">The Vibe Coding Workflow Cycle</h2>
-                    <p class="mb-4">A structured, iterative workflow is recommended:</p>
+                    <h2 class="text-2xl font-semibold mb-4"><img src="${getIconUrlForSection('workflow')}" alt="Workflow" class="heading-icon">The Vibe Coding Workflow Cycle</h2>
+                     <p class="mb-4">A structured, iterative workflow is recommended:</p>
                     <ol class="list-decimal pl-5 mb-6 space-y-2">
                         <li><strong>Setup:</strong> Create \`prd.md\` and \`todo.md\` files.</li>
                         <li><strong>Reference Plan & Todo:</strong> Tell AI to read plans.</li>
@@ -332,29 +457,18 @@
                     <p class="mb-4"><strong>Key Takeaway:</strong> Follow Build -> Test -> Commit -> Repeat. Tests are crucial. Commit often, rollback when needed.</p>
                 `,
                 quiz: [
-                    {
-                        question: "What should you do immediately after the AI builds a new feature?",
-                        options: ["Commit the code", "Ask it to build the next feature", "Write tests for the new feature", "Rollback"],
-                        answer: "Write tests for the new feature"
-                    },
-                    {
-                        question: "If running 'all tests' causes some tests to fail, what are the two potential ways to fix it?",
-                        options: ["Delete the tests / Ignore the failure", "Commit anyway / Rollback", "Fix the code / Update the tests", "Build a new feature / Ask AI to refactor"],
-                        answer: "Fix the code / Update the tests"
-                    },
-                     {
-                        question: "What Git command (or instruction to AI) is essential when the code becomes badly broken and hard to fix?",
-                        options: ["Commit the code", "Run all tests", "Rollback to previous commit", "Write more tests"],
-                        answer: "Rollback to previous commit"
-                    }
+                    { question: "What should you do immediately after the AI builds a new feature?", options: ["Commit the code", "Ask it to build the next feature", "Write tests for the new feature", "Rollback"], answer: "Write tests for the new feature" },
+                    { question: "If running 'all tests' causes some tests to fail, what are the two potential ways to fix it?", options: ["Delete the tests / Ignore the failure", "Commit anyway / Rollback", "Fix the code / Update the tests", "Build a new feature / Ask AI to refactor"], answer: "Fix the code / Update the tests" },
+                    { question: "What Git command (or instruction to AI) is essential when the code becomes badly broken and hard to fix?", options: ["Commit the code", "Run all tests", "Rollback to previous commit", "Write more tests"], answer: "Rollback to previous commit" }
                 ]
             },
+            // Section 8: Tips
             {
                 id: 'tips',
                 title: '8. Tips & Best Practices',
                 content: `
-                    <h2 class="text-2xl font-semibold mb-4">Miscellaneous Tips & Best Practices</h2>
-                    <p class="mb-4">Additional tips to enhance your vibe coding:</p>
+                    <h2 class="text-2xl font-semibold mb-4"><img src="${getIconUrlForSection('tips')}" alt="Tips" class="heading-icon">Miscellaneous Tips & Best Practices</h2>
+                     <p class="mb-4">Additional tips to enhance your vibe coding:</p>
                     <ul class="list-disc pl-5 mb-6 space-y-2">
                         <li><strong>Chat vs. Write Mode:</strong> Use 'Chat' for questions, 'Write' for code generation/modification.</li>
                         <li><strong>Model Selection:</strong> Choose appropriate models (e.g., Claude for coding).</li>
@@ -365,7 +479,8 @@
                         <li><strong>Maintainability:</strong> AI code improves over time. Ask AI to 'refactor' for cleaner code.</li>
                         <li><strong>MCP Servers (Advanced):</strong> Add tools/capabilities (e.g., Unity, Firecrawl) to your AI agent via configuration.</li>
                     </ul>
-                `,
+                     <hr class="my-6">
+                 `,
                  flashcards: [
                     { term: "Chat vs. Write Mode", definition: "'Chat' for asking questions, 'Write' for generating/modifying code." },
                     { term: "Frontend Templates", definition: "Using pre-built UI themes (like Bootstrap) to improve appearance, telling AI to use their components." },
@@ -376,11 +491,110 @@
                     { term: "MCP Servers", definition: "Model Control Protocol; allows adding extra tools and capabilities (like Unity integration or web research) to AI agents." }
                 ]
             },
+             // Section 9: Final Quiz (NEW)
+            {
+                id: 'final-quiz',
+                title: 'Final Review Quiz',
+                content: `
+                    <h2 class="text-2xl font-semibold mb-4"><img src="${getIconUrlForSection('final-quiz')}" alt="Quiz" class="heading-icon">Final Review Quiz</h2>
+                    <p class="mb-4">Let's test your overall understanding of the key concepts covered in this guide.</p>
+                `,
+                quiz: [
+                    { question: "What is the primary reason to use version control like Git, especially when vibe coding?", options: ["To make code run faster", "To automatically document code", "To rollback easily if AI breaks the code", "To choose the best AI model"], answer: "To rollback easily if AI breaks the code" },
+                    { question: "True or False: A Product Requirements Document (PRD) should ideally be created *after* the initial coding phase.", options: ["True", "False"], answer: "False" },
+                    { question: "Which step typically follows 'Build Next Feature' in the recommended vibe coding workflow?", options: ["Commit Changes", "Run All Tests", "Write Tests", "Reference Plan"], answer: "Write Tests" },
+                    { question: "Which file tells Git which files/folders it should *not* track?", options: ["config.git", "README.md", ".gitignore", "commit.log"], answer: ".gitignore" },
+                    { question: "What is a crucial security practice regarding API keys?", options: ["Store them directly in your code", "Share them only with team members via chat", "Commit them to a private Git repository", "Never commit them to Git / Never share publicly"], answer: "Never commit them to Git / Never share publicly" },
+                    { question: "Which tool type is generally considered less 'agentic' and best for simple browser-based tasks?", options: ["Windsurf/Cursor", "Replit", "Cline Extension", "AI Canvas Features"], answer: "AI Canvas Features" },
+                    { question: "What does 'refactoring' primarily aim to achieve?", options: ["Adding new features quickly", "Changing the code's external behavior", "Improving code structure/maintainability", "Fixing all security vulnerabilities"], answer: "Improving code structure/maintainability" }
+                ]
+            },
+            // Section 10: Self-Assessment (NEW - Updated UI)
+            {
+                id: 'self-assessment',
+                title: 'Self-Assessment',
+                content: `
+                    <h2 class="text-2xl font-semibold mb-4"><img src="${getIconUrlForSection('self-assessment')}" alt="Assessment" class="heading-icon">Confidence Self-Assessment</h2>
+                    <p class="mb-6">Reflect on your learning. How confident do you feel in the following areas after completing this guide? (1=Low, 5=High)</p>
+                    <form id="assessment-form">
+                        <div class="space-y-1 bg-white p-6 rounded-lg shadow">
+                            <div class="assessment-item">
+                                <span class="assessment-label">Choosing the right Vibe Coding Tool</span>
+                                <span class="assessment-options">
+                                    <label class="rating-label"><input type="radio" name="assess-tool" value="1" class="sr-only"><span>1</span></label>
+                                    <label class="rating-label"><input type="radio" name="assess-tool" value="2" class="sr-only"><span>2</span></label>
+                                    <label class="rating-label"><input type="radio" name="assess-tool" value="3" class="sr-only"><span>3</span></label>
+                                    <label class="rating-label"><input type="radio" name="assess-tool" value="4" class="sr-only"><span>4</span></label>
+                                    <label class="rating-label"><input type="radio" name="assess-tool" value="5" class="sr-only"><span>5</span></label>
+                                </span>
+                            </div>
+                             <div class="assessment-item">
+                                <span class="assessment-label">Creating a detailed Project Plan & To-Do List</span>
+                                <span class="assessment-options">
+                                     <label class="rating-label"><input type="radio" name="assess-plan" value="1" class="sr-only"><span>1</span></label>
+                                     <label class="rating-label"><input type="radio" name="assess-plan" value="2" class="sr-only"><span>2</span></label>
+                                     <label class="rating-label"><input type="radio" name="assess-plan" value="3" class="sr-only"><span>3</span></label>
+                                     <label class="rating-label"><input type="radio" name="assess-plan" value="4" class="sr-only"><span>4</span></label>
+                                     <label class="rating-label"><input type="radio" name="assess-plan" value="5" class="sr-only"><span>5</span></label>
+                                </span>
+                            </div>
+                             <div class="assessment-item">
+                                <span class="assessment-label">Using Git/Version Control effectively</span>
+                                <span class="assessment-options">
+                                     <label class="rating-label"><input type="radio" name="assess-git" value="1" class="sr-only"><span>1</span></label>
+                                     <label class="rating-label"><input type="radio" name="assess-git" value="2" class="sr-only"><span>2</span></label>
+                                     <label class="rating-label"><input type="radio" name="assess-git" value="3" class="sr-only"><span>3</span></label>
+                                     <label class="rating-label"><input type="radio" name="assess-git" value="4" class="sr-only"><span>4</span></label>
+                                     <label class="rating-label"><input type="radio" name="assess-git" value="5" class="sr-only"><span>5</span></label>
+                                </span>
+                            </div>
+                             <div class="assessment-item">
+                                <span class="assessment-label">Applying the Build-Test-Commit Workflow</span>
+                                <span class="assessment-options">
+                                     <label class="rating-label"><input type="radio" name="assess-workflow" value="1" class="sr-only"><span>1</span></label>
+                                     <label class="rating-label"><input type="radio" name="assess-workflow" value="2" class="sr-only"><span>2</span></label>
+                                     <label class="rating-label"><input type="radio" name="assess-workflow" value="3" class="sr-only"><span>3</span></label>
+                                     <label class="rating-label"><input type="radio" name="assess-workflow" value="4" class="sr-only"><span>4</span></label>
+                                     <label class="rating-label"><input type="radio" name="assess-workflow" value="5" class="sr-only"><span>5</span></label>
+                                </span>
+                            </div>
+                             <div class="assessment-item">
+                                <span class="assessment-label">Understanding and applying Rules</span>
+                                <span class="assessment-options">
+                                     <label class="rating-label"><input type="radio" name="assess-rules" value="1" class="sr-only"><span>1</span></label>
+                                     <label class="rating-label"><input type="radio" name="assess-rules" value="2" class="sr-only"><span>2</span></label>
+                                     <label class="rating-label"><input type="radio" name="assess-rules" value="3" class="sr-only"><span>3</span></label>
+                                     <label class="rating-label"><input type="radio" name="assess-rules" value="4" class="sr-only"><span>4</span></label>
+                                     <label class="rating-label"><input type="radio" name="assess-rules" value="5" class="sr-only"><span>5</span></label>
+                                </span>
+                            </div>
+                             <div class="assessment-item">
+                                <span class="assessment-label">Implementing Security & Maintainability practices</span>
+                                <span class="assessment-options">
+                                     <label class="rating-label"><input type="radio" name="assess-security" value="1" class="sr-only"><span>1</span></label>
+                                     <label class="rating-label"><input type="radio" name="assess-security" value="2" class="sr-only"><span>2</span></label>
+                                     <label class="rating-label"><input type="radio" name="assess-security" value="3" class="sr-only"><span>3</span></label>
+                                     <label class="rating-label"><input type="radio" name="assess-security" value="4" class="sr-only"><span>4</span></label>
+                                     <label class="rating-label"><input type="radio" name="assess-security" value="5" class="sr-only"><span>5</span></label>
+                                </span>
+                            </div>
+                        </div>
+                        <button id="submit-assessment-btn" type="button" class="mt-6 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-150 ease-in-out">
+                            Generate Confidence Chart
+                        </button>
+                    </form>
+                    <div id="assessment-chart-container" class="mt-8 hidden">
+                         <canvas id="assessment-chart"></canvas>
+                    </div>
+                    <p class="mt-6 text-sm text-gray-600">Consider revisiting sections where your confidence is lower.</p>
+                `
+            },
+            // Section 11: Conclusion (Original Section 9)
              {
                 id: 'conclusion',
-                title: '9. Conclusion',
+                title: 'Conclusion', // Keep original title for navigation consistency
                 content: `
-                    <h2 class="text-2xl font-semibold mb-4">Conclusion</h2>
+                    <h2 class="text-2xl font-semibold mb-4"><img src="${getIconUrlForSection('conclusion')}" alt="Conclusion" class="heading-icon">Conclusion</h2>
                     <p class="mb-4">Vibe coding is presented as a fun, accessible way to build software and learn coding concepts, regardless of experience level.</p>
                     <p>By using the right tools, planning effectively, following a structured workflow with version control and testing, and applying best practices, you can leverage AI to bring your ideas to life.</p>
                     <p class="mt-4">Happy vibe coding!</p>
@@ -391,6 +605,7 @@
         // --- Application State ---
         let currentSectionIndex = 0;
         let sectionCompletion = Array(studyGuideData.length).fill(false); // Track completion
+        let assessmentChartInstance = null; // To hold the chart instance
 
         // --- DOM Elements ---
         const navigation = document.getElementById('navigation');
@@ -423,16 +638,18 @@
             studyGuideData.forEach((section, index) => {
                 const link = document.createElement('a');
                 link.href = '#';
-                link.textContent = section.title;
-                link.classList.add('block', 'py-1', 'px-3', 'rounded-md', 'text-gray-600', 'hover:bg-gray-100', 'hover:text-gray-900', 'transition-colors');
+                // Use innerHTML to include the icon span
+                link.innerHTML = `<img src="${getIconUrlForSection(section.id)}" alt="" class="nav-icon"> ${section.title}`;
+                link.classList.add('block', 'py-1', 'px-3', 'rounded-md', 'text-gray-600', 'hover:bg-gray-100', 'hover:text-gray-900', 'transition-colors', 'flex', 'items-center'); // Added flex for alignment
                 if (index === currentSectionIndex) {
                     link.classList.add('bg-blue-100', 'font-medium', 'text-blue-700');
                     link.classList.remove('text-gray-600');
                 }
                  if (sectionCompletion[index]) {
                     const check = document.createElement('span');
-                    check.innerHTML = '&#x2713;'; // Checkmark
-                    check.classList.add('ml-2', 'text-green-500');
+                    // Use check SVG icon
+                    check.innerHTML = `<img src="https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/check.svg" alt="Completed" class="check-icon">`;
+                    check.classList.add('ml-auto', 'text-green-500'); // Use ml-auto to push checkmark right
                     link.appendChild(check);
                 }
                 link.onclick = (e) => {
@@ -443,7 +660,7 @@
             });
         }
 
-         // Function to render flashcards
+         // Function to render flashcards (Updated for Icons)
         function renderFlashcards(flashcards) {
             const container = document.createElement('div');
             container.className = 'grid grid-cols-1 md:grid-cols-2 gap-6 mt-6';
@@ -456,11 +673,17 @@
                 card.className = 'flashcard relative w-full h-full'; // Ensure card fills container
 
                 const front = document.createElement('div');
-                front.className = 'flashcard-face flashcard-front text-center';
-                front.textContent = cardData.term;
+                front.className = 'flashcard-face flashcard-front'; // Centering done by flex in CSS
+
+                const iconUrl = getIconUrlForFlashcard(cardData.term);
+                // Add icon and term to front face
+                front.innerHTML = `
+                    ${iconUrl ? `<img src="${iconUrl}" alt="${cardData.term}" class="flashcard-icon">` : ''}
+                    <span>${cardData.term}</span>
+                `;
 
                 const back = document.createElement('div');
-                back.className = 'flashcard-face flashcard-back text-center';
+                back.className = 'flashcard-face flashcard-back'; // Centering done by flex in CSS
                 back.textContent = cardData.definition;
 
                 card.appendChild(front);
@@ -476,10 +699,10 @@
         }
 
         // Function to render quiz
-        function renderQuiz(quizData) {
+        function renderQuiz(quizData, isFinalQuiz = false) { // Added flag for final quiz
             const form = document.createElement('form');
             form.className = 'mt-6 space-y-8 bg-white p-6 rounded-lg shadow';
-            form.id = 'quiz-form';
+            form.id = isFinalQuiz ? 'final-quiz-form' : 'quiz-form'; // Different ID if needed
 
             quizData.forEach((q, index) => {
                 const questionDiv = document.createElement('div');
@@ -500,10 +723,11 @@
 
                     const optionInput = document.createElement('input');
                     optionInput.type = 'radio';
-                    optionInput.name = `question-${index}`;
+                    optionInput.name = `${form.id}-question-${index}`; // Use form ID in name
                     optionInput.value = option;
                     optionInput.className = 'mr-2';
-                    optionInput.required = true; // Ensure an option is selected
+                    // Removed required attribute
+                    // optionInput.required = true;
 
                     optionLabel.appendChild(optionInput);
                     optionLabel.appendChild(document.createTextNode(option));
@@ -537,20 +761,20 @@
 
             form.onsubmit = (e) => {
                 e.preventDefault();
-                checkQuizAnswers(quizData);
+                checkQuizAnswers(quizData, form.id); // Pass form ID
             };
 
             return form;
         }
 
         // Function to check quiz answers
-        function checkQuizAnswers(quizData) {
+        function checkQuizAnswers(quizData, formId) { // Accept form ID
             let score = 0;
             let answeredCount = 0;
-            const questions = document.querySelectorAll('#quiz-form .quiz-question');
+            const questions = document.querySelectorAll(`#${formId} .quiz-question`); // Use form ID
 
             questions.forEach((questionDiv, index) => {
-                const selectedOption = questionDiv.querySelector(`input[name="question-${index}"]:checked`);
+                const selectedOption = questionDiv.querySelector(`input[name="${formId}-question-${index}"]:checked`); // Use form ID
                 const feedbackEl = questionDiv.querySelector('.feedback-text');
                 const options = questionDiv.querySelectorAll('.quiz-option');
 
@@ -593,7 +817,7 @@
             });
 
             // Disable submit button after checking
-            const submitButton = document.querySelector('#quiz-form button[type="submit"]');
+            const submitButton = document.querySelector(`#${formId} button[type="submit"]`); // Use form ID
             if (submitButton) {
                 submitButton.disabled = true;
                 submitButton.textContent = 'Answers Checked';
@@ -605,7 +829,7 @@
             if (answeredCount === quizData.length) {
                  showMessage('Quiz Results', `You scored ${score} out of ${quizData.length}.`);
                  // Mark section as complete only if all questions were answered
-                 markSectionComplete(currentSectionIndex);
+                 markSectionComplete(currentSectionIndex); // Mark quiz section complete
             } else {
                  showMessage('Quiz Incomplete', `Please answer all questions before checking.`);
                  // Re-enable options and button if not all answered
@@ -620,9 +844,160 @@
             }
         }
 
+        // Function to handle self-assessment submission and chart generation
+        function handleAssessmentSubmit(event) {
+            // No event parameter needed if attached directly to button click
+            console.log("ASSESSMENT DEBUG: handleAssessmentSubmit called"); // DEBUG
+
+            // Find the form relative to the button if needed, or query globally
+            const form = document.getElementById('assessment-form');
+             if (!form) {
+                 console.error("ASSESSMENT DEBUG: Could not find assessment form!");
+                 return;
+             }
+
+            const assessmentData = [];
+            const assessmentLabels = [
+                'Tools', 'Planning', 'Git', 'Workflow', 'Rules', 'Security'
+            ];
+            const assessmentNames = [
+                'assess-tool', 'assess-plan', 'assess-git', 'assess-workflow', 'assess-rules', 'assess-security'
+            ];
+
+            let allAnswered = true;
+            assessmentNames.forEach(name => {
+                const selected = form.querySelector(`input[name="${name}"]:checked`);
+                if (selected) {
+                    assessmentData.push(parseInt(selected.value, 10));
+                } else {
+                    allAnswered = false;
+                }
+            });
+
+            console.log("ASSESSMENT DEBUG: All answered?", allAnswered, "Data:", assessmentData); // DEBUG
+
+            if (!allAnswered) {
+                showMessage('Assessment Incomplete', 'Please rate your confidence in all areas.');
+                return;
+            }
+
+            const chartContainer = document.getElementById('assessment-chart-container');
+            const chartCanvas = document.getElementById('assessment-chart');
+            console.log("ASSESSMENT DEBUG: Canvas element?", chartCanvas); // DEBUG
+             if (!chartCanvas) {
+                 console.error("ASSESSMENT DEBUG: Canvas element #assessment-chart not found!");
+                 return;
+             }
+            const ctx = chartCanvas.getContext('2d');
+            console.log("ASSESSMENT DEBUG: Canvas context?", ctx); // DEBUG
+             if (!ctx) {
+                 console.error("ASSESSMENT DEBUG: Could not get 2D context from canvas!");
+                 return;
+             }
+
+
+            // Destroy previous chart instance if it exists
+            if (assessmentChartInstance) {
+                console.log("ASSESSMENT DEBUG: Destroying previous chart instance."); // DEBUG
+                assessmentChartInstance.destroy();
+            }
+
+            // Create new chart
+            try {
+                 console.log("ASSESSMENT DEBUG: Creating new chart..."); // DEBUG
+                assessmentChartInstance = new Chart(ctx, {
+                    type: 'radar',
+                    data: {
+                        labels: assessmentLabels,
+                        datasets: [{
+                            label: 'Your Confidence Level',
+                            data: assessmentData,
+                            fill: true,
+                            backgroundColor: 'rgba(54, 162, 235, 0.2)', // Blue area
+                            borderColor: 'rgb(54, 162, 235)', // Blue line
+                            pointBackgroundColor: 'rgb(54, 162, 235)',
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: 'rgb(54, 162, 235)'
+                        }]
+                    },
+                    options: {
+                        elements: {
+                            line: {
+                                borderWidth: 3
+                            }
+                        },
+                        scales: {
+                            r: { // Radial axis (the values)
+                                beginAtZero: true,
+                                min: 0,
+                                max: 5,
+                                ticks: {
+                                    stepSize: 1,
+                                    backdropColor: 'rgba(255, 255, 255, 0.75)', // Make ticks readable
+                                    color: '#374151' // gray-700
+                                },
+                                pointLabels: {
+                                    font: {
+                                        size: 13 // Adjust label size
+                                    },
+                                    color: '#1f2937' // gray-800
+                                },
+                                angleLines: {
+                                    color: 'rgba(0, 0, 0, 0.1)' // Lighter grid lines
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed.r !== null) {
+                                            label += context.parsed.r
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                 console.log("ASSESSMENT DEBUG: Chart created successfully."); // DEBUG
+            } catch (error) {
+                console.error("ASSESSMENT DEBUG: Chart.js error:", error); // DEBUG
+                showMessage("Chart Error", "Could not generate the confidence chart.");
+                return; // Stop execution if chart fails
+            }
+
+
+            // Show the chart container and mark section complete
+            console.log("ASSESSMENT DEBUG: Showing chart container."); // DEBUG
+            chartContainer.classList.remove('hidden');
+            markSectionComplete(currentSectionIndex);
+
+            // Optionally disable the submit button
+            const submitBtn = form.querySelector('#submit-assessment-btn'); // Query within the form
+            if(submitBtn) {
+                 console.log("ASSESSMENT DEBUG: Disabling submit button."); // DEBUG
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
         // Function to mark section complete and update progress
         function markSectionComplete(index) {
-             if (index > 0 && !sectionCompletion[index]) { // Don't mark intro, avoid re-marking
+             // Mark any section except intro as complete
+             if (index > 0 && !sectionCompletion[index]) {
                 sectionCompletion[index] = true;
                 updateProgress();
                 renderNavigation(); // Re-render nav to show checkmark
@@ -631,12 +1006,13 @@
 
         // Function to update progress bar
         function updateProgress() {
-            const completedCount = sectionCompletion.filter(Boolean).length;
-            // Calculate percentage based on sections *with* content (excluding intro)
-            const totalSections = studyGuideData.length -1; // Exclude intro section for progress calc
-            const percentage = totalSections > 0 ? Math.round((completedCount / totalSections) * 100) : 0;
+            // Calculate percentage based on core learning sections (excluding intro, final quiz, assessment)
+            const coreSectionsTotal = studyGuideData.length - 3; // Exclude intro, final quiz, assessment
+            const coreSectionsCompleted = sectionCompletion.filter((val, index) => val && index > 0 && index < studyGuideData.length - 2).length;
+            const percentage = coreSectionsTotal > 0 ? Math.round((coreSectionsCompleted / coreSectionsTotal) * 100) : 0;
+
             progressBar.style.width = `${percentage}%`;
-            progressText.textContent = `${percentage}% Complete`;
+            progressText.textContent = `${percentage}% Complete (Core Sections)`;
         }
 
 
@@ -662,22 +1038,57 @@
                  flashcardsTitle.className = 'text-xl font-semibold mt-8 mb-4';
                  contentWrapper.appendChild(flashcardsTitle);
                  contentWrapper.appendChild(renderFlashcards(section.flashcards));
-                 // Mark complete when flashcards are viewed (simple approach)
+                 // Mark section as complete when flashcards are viewed (simple approach)
                  markSectionComplete(currentSectionIndex);
             }
 
             // Render quiz if it exists
             if (section.quiz) {
                  const quizTitle = document.createElement('h3');
-                 quizTitle.textContent = 'Quiz Time!';
+                 quizTitle.textContent = section.id === 'final-quiz' ? 'Final Knowledge Check' : 'Quiz Time!';
                  quizTitle.className = 'text-xl font-semibold mt-8 mb-4';
                  contentWrapper.appendChild(quizTitle);
-                 contentWrapper.appendChild(renderQuiz(section.quiz));
+                 contentWrapper.appendChild(renderQuiz(section.quiz, section.id === 'final-quiz'));
                  // Completion marked when quiz is submitted successfully
-            } else if (!section.flashcards && currentSectionIndex > 0) {
-                // Auto-mark sections without quiz/flashcards as complete on view (excluding intro)
+            } else if (section.id === 'self-assessment') {
+                 // Add event listener for the assessment BUTTON click
+                 const assessmentButton = contentWrapper.querySelector('#submit-assessment-btn'); // Find the button
+                 if (assessmentButton) {
+                     console.log("ASSESSMENT DEBUG: Attaching click listener to button."); // DEBUG
+                     assessmentButton.addEventListener('click', handleAssessmentSubmit); // Attach to button click
+                     // Add listener to update label style on change within the form
+                     const assessmentForm = contentWrapper.querySelector('#assessment-form');
+                     if (assessmentForm) {
+                         assessmentForm.addEventListener('change', (event) => {
+                            if (event.target.type === 'radio') {
+                                // Remove 'checked' class from all labels in the same group
+                                const groupName = event.target.name;
+                                assessmentForm.querySelectorAll(`input[name="${groupName}"]`).forEach(input => {
+                                    input.parentElement.classList.remove('checked');
+                                });
+                                // Add 'checked' class to the selected label
+                                event.target.parentElement.classList.add('checked');
+                                // Re-enable submit button if ratings change after submission
+                                if (assessmentButton && assessmentButton.disabled) {
+                                    assessmentButton.disabled = false;
+                                    assessmentButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                                    // Hide chart again if ratings change
+                                    const chartContainer = document.getElementById('assessment-chart-container');
+                                    if(chartContainer) chartContainer.classList.add('hidden');
+                                }
+                            }
+                         });
+                     }
+                 } else {
+                     console.error("ASSESSMENT DEBUG: Could not find #submit-assessment-btn to attach listener."); // DEBUG
+                 }
+                 // Don't auto-mark assessment complete on view
+            }
+            else if (!section.flashcards && section.id !== 'intro' && section.id !== 'conclusion') {
+                // Auto-mark sections without quiz/flashcards as complete on view (excluding intro, assessment, conclusion)
                  markSectionComplete(currentSectionIndex);
             }
+
 
             contentArea.appendChild(contentWrapper);
 
