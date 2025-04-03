@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Vibe Coding Study Guide</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @font-face {
+        font-family: 'LucideIcons';
+        /* Corrected URL format */
+        src: url('https://cdn.jsdelivr.net/npm/lucide-static@latest/font/Lucide.ttf') format('truetype');
+      }
+      .lucide {
+        font-family: 'LucideIcons';
+        font-size: 1.25rem; /* Adjust size as needed */
+        line-height: 1;
+      }
+      /* Basic transition for smooth content switching */
+      .content-section {
+        transition: opacity 0.3s ease-in-out;
+      }
+      .hidden {
+        display: none;
+        opacity: 0;
+      }
+      .visible {
+        display: block;
+        opacity: 1;
+      }
+       /* Basic flashcard styling */
+      .flashcard-container {
+        perspective: 1000px;
+        min-height: 150px; /* Ensure container has height */
+      }
+      .flashcard {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        transform-style: preserve-3d;
+        transition: transform 0.6s;
+        cursor: pointer;
+      }
+      .flashcard.is-flipped {
+        transform: rotateY(180deg);
+      }
+      .flashcard-face {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      }
+      .flashcard-front {
+        background-color: #f3f4f6; /* gray-100 */
+        color: #1f2937; /* gray-800 */
+      }
+      .flashcard-back {
+        background-color: #d1d5db; /* gray-300 */
+        color: #1f2937; /* gray-800 */
+        transform: rotateY(180deg);
+      }
+       /* Basic quiz styling */
+      .quiz-option {
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+      .quiz-option:hover {
+        background-color: #e5e7eb; /* gray-200 */
+      }
+      .quiz-option.selected {
+        background-color: #d1fae5; /* green-100 */
+        border-color: #10b981; /* green-500 */
+      }
+       .quiz-option.correct {
+        background-color: #a7f3d0; /* green-200 */
+        border-color: #059669; /* green-600 */
+      }
+      .quiz-option.incorrect {
+        background-color: #fee2e2; /* red-100 */
+        border-color: #ef4444; /* red-500 */
+      }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans antialiased text-gray-800">
+
+    <div class="flex flex-col md:flex-row min-h-screen">
+        <aside class="w-full md:w-64 bg-white shadow-md p-6 space-y-4">
+            <h1 class="text-xl font-semibold text-gray-700">Vibe Coding Guide</h1>
+            <nav id="navigation" class="space-y-2">
+                </nav>
+            <div class="pt-4 border-t border-gray-200">
+                <h2 class="text-lg font-medium mb-2">Progress</h2>
+                <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                    <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+                </div>
+                <p id="progress-text" class="text-sm text-gray-600 mt-1">0% Complete</p>
+            </div>
+        </aside>
+
+        <main class="flex-1 p-6 md:p-10 overflow-y-auto">
+            <div id="content-area">
+                </div>
+
+             <div class="mt-8 flex justify-between border-t pt-4">
+                <button id="prev-btn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg inline-flex items-center transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span class="lucide mr-2">&#xea1b;</span> Previous
+                </button>
+                <button id="next-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg inline-flex items-center transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed">
+                     Next <span class="lucide ml-2">&#xea1f;</span>
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <div id="message-box-template" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center hidden z-50">
+        <div class="relative mx-auto p-5 border w-11/12 md:w-1/2 lg:w-1/3 shadow-lg rounded-md bg-white">
+            <div class="mt-3 text-center">
+                <h3 id="message-title" class="text-lg leading-6 font-medium text-gray-900"></h3>
+                <div class="mt-2 px-7 py-3">
+                    <p id="message-text" class="text-sm text-gray-500"></p>
+                </div>
+                <div class="items-center px-4 py-3">
+                    <button id="message-ok-btn" class="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300">
+                        OK
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // --- Data Structure ---
+        const studyGuideData = [
+            {
+                id: 'intro',
+                title: 'Introduction',
+                content: `
+                    <h2 class="text-2xl font-semibold mb-4">Welcome!</h2>
+                    <p class="mb-4">This is an interactive study guide for the Vibe Coding tutorial by Matthew Berman.</p>
+                    <p>Navigate through the sections using the sidebar. Each section covers key concepts from the video and includes interactive elements like quizzes or flashcards to test your understanding.</p>
+                    <p class="mt-4">Click "Next" to begin.</p>
+                `
+            },
+            {
+                id: 'tools',
+                title: '1. Choosing Your Tool',
+                content: `
+                    <h2 class="text-2xl font-semibold mb-4">Choosing Your Vibe Coding Tool</h2>
+                    <p class="mb-4">The first step is selecting the right tool. Key options include:</p>
+                    <ul class="list-disc pl-5 mb-6 space-y-2">
+                        <li><strong>Windsurf & Cursor:</strong> Code editors (Windsurf is a VS Code fork). Agentic, good for complex projects.</li>
+                        <li><strong>Cline:</strong> VS Code extension for those preferring the standard VS Code interface.</li>
+                        <li><strong>Replit:</strong> Fully online editor, easy deployment.</li>
+                        <li><strong>AI Canvas Features (Claude, etc.):</strong> Easiest start, runs HTML/JS in browser, less agentic.</li>
+                    </ul>
+                    <p class="mb-4"><strong>Key Takeaway:</strong> Use AI Canvases for simple tasks, dedicated tools (Windsurf/Cursor) for complex projects.</p>
+                `,
+                quiz: [
+                    {
+                        question: "Which tool is described as a fork of VS Code and good for complex, agentic coding?",
+                        options: ["Replit", "Cline", "Windsurf/Cursor", "AI Canvas"],
+                        answer: "Windsurf/Cursor"
+                    },
+                    {
+                        question: "What is the main advantage of using Replit?",
+                        options: ["Most agentic", "Runs offline", "Easy deployment", "Best for Python only"],
+                        answer: "Easy deployment"
+                    },
+                     {
+                        question: "Which option is best for quickly running simple HTML/JS code directly in the browser without installation?",
+                        options: ["Windsurf", "Cline", "AI Canvas Features", "Cursor"],
+                        answer: "AI Canvas Features"
+                    }
+                ]
+            },
+             {
+                id: 'windsurf-features',
+                title: '2. Windsurf Features',
+                content: `
+                    <h2 class="text-2xl font-semibold mb-4">Windsurf Features</h2>
+                    <p class="mb-4">Windsurf offers several helpful features for vibe coding (as shown in the sponsor segment):</p>
+                    <p class="mb-6">Use the flashcards below to review key features.</p>
+                `,
+                flashcards: [
+                    { term: "Model Switching", definition: "Easily select different AI models (Claude, GPT, etc.) for the task at hand." },
+                    { term: "Tab Completion", definition: "Advanced code completion aware of codebase, terminal, and Cascade context." },
+                    { term: "Browser Preview", definition: "Embedded preview of web projects, allows clicking elements for targeted AI feedback (@dom-element)." },
+                    { term: "Contextual Knowledge", definition: "Ability to paste URLs (like documentation) into Cascade to give the AI extra context." }
+                ]
+            },
+            {
+                id: 'language-stack',
+                title: '3. Language & Stack',
+                content: `
+                    <h2 class="text-2xl font-semibold mb-4">Choosing Your Language & Stack</h2>
+                    <p class="mb-4">Selecting the right language is important:</p>
+                    <ul class="list-disc pl-5 mb-6 space-y-2">
+                        <li><strong>Rule:</strong> Choose popular languages (more training data for AI).</li>
+                        <li><strong>Top Choices:</strong> JavaScript (most popular), Python (popular in AI).</li>
+                        <li><strong>Speaker's Preferred Stack:</strong> Python (backend), HTML/JavaScript (frontend). Node.js is an alternative backend.</li>
+                        <li><strong>Resource:</strong> GitHut 2.0 shows language popularity.</li>
+                    </ul>
+                     <p class="mb-4"><strong>Key Takeaway:</strong> Stick to popular languages like JS or Python.</p>
+                `,
+                 quiz: [
+                    {
+                        question: "What is the main reason given for choosing a popular programming language?",
+                        options: ["Easier to learn", "Faster execution speed", "More AI training data available", "Better documentation"],
+                        answer: "More AI training data available"
+                    },
+                    {
+                        question: "Which two languages were highlighted as top choices for vibe coding?",
+                        options: ["Java & C#", "Python & JavaScript", "Ruby & Go", "Swift & Kotlin"],
+                        answer: "Python & JavaScript"
+                    }
+                ]
+            },
+             {
+                id: 'planning',
+                title: '4. Planning Your Project',
+                content: `
+                    <h2 class="text-2xl font-semibold mb-4">Planning Your Project</h2>
+                    <p class="mb-4">Thorough planning is crucial *before* coding:</p>
+                    <ul class="list-disc pl-5 mb-6 space-y-2">
+                        <li><strong>Invest Time:</strong> Think through features, edge cases, and desired behavior upfront.</li>
+                        <li><strong>Use AI Assistance:</strong> Tools like Grok can help brainstorm and identify gaps. Ask AI clarifying questions.</li>
+                        <li><strong>PRD (Product Requirements Document):</strong> Format the plan as a PRD, preferably in Markdown (.md).</li>
+                        <li><strong>To-Do List:</strong> Generate a step-by-step Markdown checklist.</li>
+                        <li><strong>Living Documents:</strong> Update the PRD and To-Do list as the project evolves.</li>
+                    </ul>
+                    <p class="mb-4"><strong>Key Takeaway:</strong> Don't skip planning. Use AI to help create detailed PRD and To-Do lists.</p>
+                `,
+                quiz: [
+                    {
+                        question: "What document format is recommended for the project plan (PRD) and To-Do list?",
+                        options: ["Plain Text (.txt)", "Word Document (.docx)", "Markdown (.md)", "JSON (.json)"],
+                        answer: "Markdown (.md)"
+                    },
+                    {
+                        question: "True or False: The project plan (PRD) and To-Do list should be created once and never changed.",
+                        options: ["True", "False"],
+                        answer: "False"
+                    }
+                ]
+            },
+            {
+                id: 'version-control',
+                title: '5. Version Control (Git)',
+                content: `
+                    <h2 class="text-2xl font-semibold mb-4">Version Control: Your Safety Net</h2>
+                    <p class="mb-4">Version control is essential, especially for vibe coding:</p>
+                    <ul class="list-disc pl-5 mb-6 space-y-2">
+                        <li><strong>Purpose:</strong> Saves snapshots (versions) of your code.</li>
+                        <li><strong>Critical Benefit:</strong> Allows you to **roll back** to a working state if AI breaks the code.</li>
+                        <li><strong>Standard Tool:</strong> Git is the most common version control software.</li>
+                        <li><strong>AI Assistance:</strong> Your AI agent can handle most Git commands (init, commit, etc.).</li>
+                        <li><strong>GitHub:</strong> Use for cloud backup ("Google Docs for code").</li>
+                    </ul>
+                    <p class="mb-4"><strong>Key Takeaway:</strong> Use Git, let AI help with commands, use GitHub for backup, commit frequently!</p>
+                `,
+                 flashcards: [
+                    { term: "Version Control", definition: "A system to save snapshots (versions) of code over time." },
+                    { term: "Git", definition: "The standard, most common version control software." },
+                    { term: "Commit", definition: "Saving a snapshot of your code changes to Git." },
+                    { term: "Rollback", definition: "Reverting your code back to a previous committed state." },
+                    { term: "GitHub", definition: "A popular web platform for hosting Git repositories (cloud backup)." },
+                    { term: ".gitignore", definition: "A file specifying files/directories that Git should ignore (not track)." }
+                ]
+            },
+            {
+                id: 'rules',
+                title: '6. Guiding the AI with Rules',
+                content: `
+                    <h2 class="text-2xl font-semibold mb-4">Guiding the AI with Rules</h2>
+                    <p class="mb-4">Rules act like system prompts to guide the AI's coding style and workflow:</p>
+                    <ul class="list-disc pl-5 mb-6 space-y-2">
+                        <li><strong>Purpose:</strong> Ensure consistency and adherence to desired practices.</li>
+                        <li><strong>Access (Windsurf):</strong> Settings -> Memories and Rules -> Manage.</li>
+                        <li><strong>Types:</strong>
+                            <ul class="list-circle pl-5">
+                                <li><strong>Global Rules:</strong> Apply to all projects ('global_rules.md').</li>
+                                <li><strong>Workspace Rules:</strong> Apply only to the current project.</li>
+                            </ul>
+                        </li>
+                         <li><strong>Content:</strong> Can include workflow instructions (e.g., restart server), coding style preferences (e.g., simplicity, no duplication), environment considerations (dev/test/prod), file size limits, etc.</li>
+                         <li><strong>Language-Specific Rules:</strong> Found in resources like \`awesome-cursorrules\` on GitHub for framework best practices (React, Python/FastAPI, etc.).</li>
+                    </ul>
+                     <p class="mb-4"><strong>Key Takeaway:</strong> Use rules to customize AI behavior. Start with examples and explore language-specific rule sets.</p>
+                 `,
+                 quiz: [
+                    {
+                        question: "What is the primary purpose of using 'Rules' in tools like Windsurf?",
+                        options: ["To speed up the AI", "To guide the AI's coding style and workflow", "To automatically fix bugs", "To choose the AI model"],
+                        answer: "To guide the AI's coding style and workflow"
+                    },
+                    {
+                        question: "Which type of rule applies to *all* projects within Windsurf?",
+                        options: ["Workspace Rule", "Temporary Rule", "Global Rule", "Language Rule"],
+                        answer: "Global Rule"
+                    },
+                    {
+                        question: "Where can you find pre-made, language-specific rule sets mentioned in the video?",
+                        options: ["Windsurf documentation", "Stack Overflow", "The `awesome-cursorrules` GitHub repository", "Replit templates"],
+                        answer: "The `awesome-cursorrules` GitHub repository"
+                    }
+                ]
+            },
+            {
+                id: 'workflow',
+                title: '7. The Vibe Coding Workflow',
+                content: `
+                    <h2 class="text-2xl font-semibold mb-4">The Vibe Coding Workflow Cycle</h2>
+                    <p class="mb-4">A structured, iterative workflow is recommended:</p>
+                    <ol class="list-decimal pl-5 mb-6 space-y-2">
+                        <li><strong>Setup:</strong> Create \`prd.md\` and \`todo.md\` files.</li>
+                        <li><strong>Reference Plan & Todo:</strong> Tell AI to read plans.</li>
+                        <li><strong>Build Next Feature:</strong> Instruct AI to build *one* item.</li>
+                        <li><strong>Write Tests:</strong> Ask AI to write tests for the new feature.</li>
+                        <li><strong>Run New Feature Tests:</strong> Execute tests for the new code. Fix if they fail.</li>
+                        <li><strong>Run All Tests:</strong> Execute the entire test suite. Fix code or update tests if they fail.</li>
+                        <li><strong>Commit Changes:</strong> Save working code to Git (\`commit the code\`).</li>
+                        <li><strong>Repeat:</strong> Go back to step 2 for the next feature.</li>
+                    </ol>
+                    <p class="mb-4"><strong>Handling Issues:</strong> If code becomes unfixable, use **Rollback** to revert to the last good commit.</p>
+                    <p class="mb-4"><strong>Key Takeaway:</strong> Follow Build -> Test -> Commit -> Repeat. Tests are crucial. Commit often, rollback when needed.</p>
+                `,
+                quiz: [
+                    {
+                        question: "What should you do immediately after the AI builds a new feature?",
+                        options: ["Commit the code", "Ask it to build the next feature", "Write tests for the new feature", "Rollback"],
+                        answer: "Write tests for the new feature"
+                    },
+                    {
+                        question: "If running 'all tests' causes some tests to fail, what are the two potential ways to fix it?",
+                        options: ["Delete the tests / Ignore the failure", "Commit anyway / Rollback", "Fix the code / Update the tests", "Build a new feature / Ask AI to refactor"],
+                        answer: "Fix the code / Update the tests"
+                    },
+                     {
+                        question: "What Git command (or instruction to AI) is essential when the code becomes badly broken and hard to fix?",
+                        options: ["Commit the code", "Run all tests", "Rollback to previous commit", "Write more tests"],
+                        answer: "Rollback to previous commit"
+                    }
+                ]
+            },
+            {
+                id: 'tips',
+                title: '8. Tips & Best Practices',
+                content: `
+                    <h2 class="text-2xl font-semibold mb-4">Miscellaneous Tips & Best Practices</h2>
+                    <p class="mb-4">Additional tips to enhance your vibe coding:</p>
+                    <ul class="list-disc pl-5 mb-6 space-y-2">
+                        <li><strong>Chat vs. Write Mode:</strong> Use 'Chat' for questions, 'Write' for code generation/modification.</li>
+                        <li><strong>Model Selection:</strong> Choose appropriate models (e.g., Claude for coding).</li>
+                        <li><strong>Frontend Templates:</strong> Use pre-built templates (e.g., Bootstrap) for better UI, have AI use their components.</li>
+                        <li><strong>Targeting Code (@):</strong> Use \`@\` to reference specific files/dirs for focused AI changes.</li>
+                        <li><strong>three.js:</strong> Popular library for vibe coding 3D games/visuals in JavaScript.</li>
+                        <li><strong>Security:</strong> Learn best practices, use rules, find checklists, **NEVER share/commit API keys**, use \`.gitignore\`, consider audits, use established auth (Clerk), implement rate limiting/DDoS protection.</li>
+                        <li><strong>Maintainability:</strong> AI code improves over time. Ask AI to 'refactor' for cleaner code.</li>
+                        <li><strong>MCP Servers (Advanced):</strong> Add tools/capabilities (e.g., Unity, Firecrawl) to your AI agent via configuration.</li>
+                    </ul>
+                `,
+                 flashcards: [
+                    { term: "Chat vs. Write Mode", definition: "'Chat' for asking questions, 'Write' for generating/modifying code." },
+                    { term: "Frontend Templates", definition: "Using pre-built UI themes (like Bootstrap) to improve appearance, telling AI to use their components." },
+                    { term: "Targeting Code (@)", definition: "Using the '@' symbol in prompts to reference specific files/directories for focused AI updates." },
+                    { term: "three.js", definition: "A popular JavaScript library for creating 3D graphics and games." },
+                    { term: "API Keys Security", definition: "NEVER share publicly, NEVER commit to Git. Use .gitignore." },
+                    { term: "Refactoring", definition: "Asking AI to restructure existing code to make it cleaner, more modular, and maintainable without changing its external behavior." },
+                    { term: "MCP Servers", definition: "Model Control Protocol; allows adding extra tools and capabilities (like Unity integration or web research) to AI agents." }
+                ]
+            },
+             {
+                id: 'conclusion',
+                title: '9. Conclusion',
+                content: `
+                    <h2 class="text-2xl font-semibold mb-4">Conclusion</h2>
+                    <p class="mb-4">Vibe coding is presented as a fun, accessible way to build software and learn coding concepts, regardless of experience level.</p>
+                    <p>By using the right tools, planning effectively, following a structured workflow with version control and testing, and applying best practices, you can leverage AI to bring your ideas to life.</p>
+                    <p class="mt-4">Happy vibe coding!</p>
+                `
+            },
+        ];
+
+        // --- Application State ---
+        let currentSectionIndex = 0;
+        let sectionCompletion = Array(studyGuideData.length).fill(false); // Track completion
+
+        // --- DOM Elements ---
+        const navigation = document.getElementById('navigation');
+        const contentArea = document.getElementById('content-area');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        const messageBoxTemplate = document.getElementById('message-box-template');
+        const messageTitle = document.getElementById('message-title');
+        const messageText = document.getElementById('message-text');
+        const messageOkBtn = document.getElementById('message-ok-btn');
+
+
+        // --- Functions ---
+
+        // Function to show a custom message box
+        function showMessage(title, text) {
+            messageTitle.textContent = title;
+            messageText.textContent = text;
+            messageBoxTemplate.classList.remove('hidden');
+            messageOkBtn.onclick = () => {
+                messageBoxTemplate.classList.add('hidden');
+            };
+        }
+
+        // Function to render navigation links
+        function renderNavigation() {
+            navigation.innerHTML = ''; // Clear existing links
+            studyGuideData.forEach((section, index) => {
+                const link = document.createElement('a');
+                link.href = '#';
+                link.textContent = section.title;
+                link.classList.add('block', 'py-1', 'px-3', 'rounded-md', 'text-gray-600', 'hover:bg-gray-100', 'hover:text-gray-900', 'transition-colors');
+                if (index === currentSectionIndex) {
+                    link.classList.add('bg-blue-100', 'font-medium', 'text-blue-700');
+                    link.classList.remove('text-gray-600');
+                }
+                 if (sectionCompletion[index]) {
+                    const check = document.createElement('span');
+                    check.innerHTML = '&#x2713;'; // Checkmark
+                    check.classList.add('ml-2', 'text-green-500');
+                    link.appendChild(check);
+                }
+                link.onclick = (e) => {
+                    e.preventDefault();
+                    navigateToSection(index);
+                };
+                navigation.appendChild(link);
+            });
+        }
+
+         // Function to render flashcards
+        function renderFlashcards(flashcards) {
+            const container = document.createElement('div');
+            container.className = 'grid grid-cols-1 md:grid-cols-2 gap-6 mt-6';
+
+            flashcards.forEach(cardData => {
+                const cardContainer = document.createElement('div');
+                cardContainer.className = 'flashcard-container h-48'; // Added fixed height
+
+                const card = document.createElement('div');
+                card.className = 'flashcard relative w-full h-full'; // Ensure card fills container
+
+                const front = document.createElement('div');
+                front.className = 'flashcard-face flashcard-front text-center';
+                front.textContent = cardData.term;
+
+                const back = document.createElement('div');
+                back.className = 'flashcard-face flashcard-back text-center';
+                back.textContent = cardData.definition;
+
+                card.appendChild(front);
+                card.appendChild(back);
+                cardContainer.appendChild(card);
+                container.appendChild(cardContainer);
+
+                card.onclick = () => {
+                    card.classList.toggle('is-flipped');
+                };
+            });
+            return container;
+        }
+
+        // Function to render quiz
+        function renderQuiz(quizData) {
+            const form = document.createElement('form');
+            form.className = 'mt-6 space-y-8 bg-white p-6 rounded-lg shadow';
+            form.id = 'quiz-form';
+
+            quizData.forEach((q, index) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'quiz-question border-b pb-4';
+                questionDiv.dataset.questionIndex = index; // Store index
+
+                const questionText = document.createElement('p');
+                questionText.className = 'font-medium text-lg mb-3';
+                questionText.textContent = `Q${index + 1}: ${q.question}`;
+                questionDiv.appendChild(questionText);
+
+                const optionsDiv = document.createElement('div');
+                optionsDiv.className = 'space-y-2';
+
+                q.options.forEach(option => {
+                    const optionLabel = document.createElement('label');
+                    optionLabel.className = 'quiz-option block border border-gray-300 rounded-md p-3 hover:bg-gray-100 transition duration-150 ease-in-out';
+
+                    const optionInput = document.createElement('input');
+                    optionInput.type = 'radio';
+                    optionInput.name = `question-${index}`;
+                    optionInput.value = option;
+                    optionInput.className = 'mr-2';
+                    optionInput.required = true; // Ensure an option is selected
+
+                    optionLabel.appendChild(optionInput);
+                    optionLabel.appendChild(document.createTextNode(option));
+                    optionsDiv.appendChild(optionLabel);
+
+                    // Add click listener to visually select
+                     optionInput.onchange = () => {
+                        // Remove 'selected' from siblings
+                         questionDiv.querySelectorAll('.quiz-option').forEach(optLabel => optLabel.classList.remove('selected'));
+                        // Add 'selected' to current
+                        if(optionInput.checked) {
+                            optionLabel.classList.add('selected');
+                        }
+                    };
+                });
+
+                questionDiv.appendChild(optionsDiv);
+                 // Add feedback area
+                const feedbackText = document.createElement('p');
+                feedbackText.className = 'feedback-text mt-2 text-sm font-medium hidden';
+                questionDiv.appendChild(feedbackText);
+
+                form.appendChild(questionDiv);
+            });
+
+            const submitButton = document.createElement('button');
+            submitButton.type = 'submit';
+            submitButton.textContent = 'Check Answers';
+            submitButton.className = 'mt-6 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition duration-150 ease-in-out';
+            form.appendChild(submitButton);
+
+            form.onsubmit = (e) => {
+                e.preventDefault();
+                checkQuizAnswers(quizData);
+            };
+
+            return form;
+        }
+
+        // Function to check quiz answers
+        function checkQuizAnswers(quizData) {
+            let score = 0;
+            let answeredCount = 0;
+            const questions = document.querySelectorAll('#quiz-form .quiz-question');
+
+            questions.forEach((questionDiv, index) => {
+                const selectedOption = questionDiv.querySelector(`input[name="question-${index}"]:checked`);
+                const feedbackEl = questionDiv.querySelector('.feedback-text');
+                const options = questionDiv.querySelectorAll('.quiz-option');
+
+                options.forEach(opt => {
+                    opt.classList.remove('correct', 'incorrect', 'selected'); // Clear previous results
+                    opt.querySelector('input').disabled = true; // Disable after checking
+                });
+
+
+                if (selectedOption) {
+                    answeredCount++;
+                    const correctAnswer = quizData[index].answer;
+                    const userAnswer = selectedOption.value;
+                    const parentLabel = selectedOption.closest('label');
+
+                    feedbackEl.classList.remove('hidden', 'text-green-600', 'text-red-600');
+
+                    if (userAnswer === correctAnswer) {
+                        score++;
+                        parentLabel.classList.add('correct');
+                        feedbackEl.textContent = 'Correct!';
+                        feedbackEl.classList.add('text-green-600');
+                    } else {
+                        parentLabel.classList.add('incorrect');
+                         feedbackEl.textContent = `Incorrect. Correct answer: ${correctAnswer}`;
+                         feedbackEl.classList.add('text-red-600');
+                        // Highlight the correct answer
+                         options.forEach(optLabel => {
+                             if (optLabel.querySelector('input').value === correctAnswer) {
+                                 optLabel.classList.add('correct');
+                             }
+                         });
+                    }
+                } else {
+                    // Mark unanswered questions if needed, or just rely on count
+                    feedbackEl.textContent = 'Not answered.';
+                    feedbackEl.classList.add('text-gray-500', 'hidden'); // Keep hidden if not answered
+                }
+                 feedbackEl.classList.remove('hidden');
+            });
+
+            // Disable submit button after checking
+            const submitButton = document.querySelector('#quiz-form button[type="submit"]');
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.textContent = 'Answers Checked';
+                submitButton.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+
+
+            // Show overall score
+            if (answeredCount === quizData.length) {
+                 showMessage('Quiz Results', `You scored ${score} out of ${quizData.length}.`);
+                 // Mark section as complete only if all questions were answered
+                 markSectionComplete(currentSectionIndex);
+            } else {
+                 showMessage('Quiz Incomplete', `Please answer all questions before checking.`);
+                 // Re-enable options and button if not all answered
+                 questions.forEach((questionDiv) => {
+                      questionDiv.querySelectorAll('input').forEach(input => input.disabled = false);
+                 });
+                  if (submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Check Answers';
+                    submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                 }
+            }
+        }
+
+        // Function to mark section complete and update progress
+        function markSectionComplete(index) {
+             if (index > 0 && !sectionCompletion[index]) { // Don't mark intro, avoid re-marking
+                sectionCompletion[index] = true;
+                updateProgress();
+                renderNavigation(); // Re-render nav to show checkmark
+            }
+        }
+
+        // Function to update progress bar
+        function updateProgress() {
+            const completedCount = sectionCompletion.filter(Boolean).length;
+            // Calculate percentage based on sections *with* content (excluding intro)
+            const totalSections = studyGuideData.length -1; // Exclude intro section for progress calc
+            const percentage = totalSections > 0 ? Math.round((completedCount / totalSections) * 100) : 0;
+            progressBar.style.width = `${percentage}%`;
+            progressText.textContent = `${percentage}% Complete`;
+        }
+
+
+        // Function to render content for the current section
+        function renderContent() {
+            const section = studyGuideData[currentSectionIndex];
+            contentArea.innerHTML = ''; // Clear previous content
+
+            // Add a wrapper div for transitions
+            const contentWrapper = document.createElement('div');
+            contentWrapper.className = 'content-section visible'; // Start visible
+
+            // Render main content HTML
+            const contentDiv = document.createElement('div');
+            contentDiv.innerHTML = section.content;
+            contentWrapper.appendChild(contentDiv);
+
+
+            // Render flashcards if they exist
+            if (section.flashcards) {
+                 const flashcardsTitle = document.createElement('h3');
+                 flashcardsTitle.textContent = 'Flashcards (Click to Flip)';
+                 flashcardsTitle.className = 'text-xl font-semibold mt-8 mb-4';
+                 contentWrapper.appendChild(flashcardsTitle);
+                 contentWrapper.appendChild(renderFlashcards(section.flashcards));
+                 // Mark complete when flashcards are viewed (simple approach)
+                 markSectionComplete(currentSectionIndex);
+            }
+
+            // Render quiz if it exists
+            if (section.quiz) {
+                 const quizTitle = document.createElement('h3');
+                 quizTitle.textContent = 'Quiz Time!';
+                 quizTitle.className = 'text-xl font-semibold mt-8 mb-4';
+                 contentWrapper.appendChild(quizTitle);
+                 contentWrapper.appendChild(renderQuiz(section.quiz));
+                 // Completion marked when quiz is submitted successfully
+            } else if (!section.flashcards && currentSectionIndex > 0) {
+                // Auto-mark sections without quiz/flashcards as complete on view (excluding intro)
+                 markSectionComplete(currentSectionIndex);
+            }
+
+            contentArea.appendChild(contentWrapper);
+
+            // Update button states
+            prevBtn.disabled = currentSectionIndex === 0;
+            nextBtn.disabled = currentSectionIndex === studyGuideData.length - 1;
+
+            // Re-render navigation to highlight the current section
+            renderNavigation();
+        }
+
+        // Function to navigate to a specific section
+        function navigateToSection(index) {
+            if (index >= 0 && index < studyGuideData.length) {
+                 // Add transition effect
+                const currentContent = contentArea.querySelector('.content-section');
+                if (currentContent) {
+                    currentContent.classList.remove('visible');
+                    currentContent.classList.add('hidden');
+                    // Wait for fade out before rendering new content
+                    setTimeout(() => {
+                        currentSectionIndex = index;
+                        renderContent();
+                        // Ensure new content fades in (handled by renderContent adding 'visible')
+                    }, 300); // Match CSS transition duration
+                } else {
+                     // Initial load or if something went wrong
+                     currentSectionIndex = index;
+                     renderContent();
+                }
+            }
+        }
+
+        // --- Event Listeners ---
+        prevBtn.onclick = () => {
+            navigateToSection(currentSectionIndex - 1);
+        };
+
+        nextBtn.onclick = () => {
+            navigateToSection(currentSectionIndex + 1);
+        };
+
+        // --- Initial Load ---
+        renderContent(); // Render the initial section (Introduction)
+        updateProgress(); // Initial progress update
+
+    </script>
+
+</body>
+</html>
